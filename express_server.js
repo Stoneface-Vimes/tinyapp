@@ -12,6 +12,17 @@ const urlDatabase = {
   "9sm5xk": "http://www.google.com"
 };
 
+//GETS
+
+app.get("/urls/new", (req, res) => {
+  res.render("urls_new");
+})
+
+app.get("/urls", (req, res) => {
+  let templateVars = { urls: urlDatabase };
+  res.render("urls_index", templateVars);
+});
+
 app.get(`/u/:shortURL`, (req, res) => {
   let red = req.params.shortURL
   console.log(urlDatabase)
@@ -25,6 +36,16 @@ app.get(`/u/:shortURL`, (req, res) => {
   }
 });
 
+//POSTS
+
+app.post("/urls/:shortURL/delete", (req, res) => {
+
+  const destroy = req.params.shortURL;
+  delete urlDatabase[destroy];
+  console.log(urlDatabase);
+  res.redirect("/urls");
+});
+
 app.post("/urls", (req, res) => {
   //console.log(req.body); //Log the POST request body to the console
   shortURL = generateRandomString();
@@ -34,15 +55,6 @@ app.post("/urls", (req, res) => {
     let templateVars = {shortURL: shortURL, longURL: urlDatabase[shortURL]}
     res.render("urls_show", templateVars);
   });
-});
-
-app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
-})
-
-app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase };
-  res.render("urls_index", templateVars);
 });
 
 //Checks the user defined router parameter against the urlDatabase and returns the relevant value
