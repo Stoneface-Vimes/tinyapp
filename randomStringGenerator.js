@@ -2,8 +2,14 @@ function generateRandomString() {
   let randomTiny = '';
   let possibleChars = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-  for (let i = 0; i < 6; i++) {
-    randomTiny += possibleChars[Math.round(Math.random() * (possibleChars.length))]
+  let count = 0;
+
+  while (count < 6) {
+    let possibleValue = possibleChars[Math.round(Math.random() * (possibleChars.length))]
+    if (possibleValue !== undefined) {
+      randomTiny += possibleValue;
+      count++;
+    }
   }
 
   return randomTiny;
