@@ -25,11 +25,11 @@ app.get("/urls", (req, res) => {
 
 app.get(`/u/:shortURL`, (req, res) => {
   let red = req.params.shortURL
-  console.log(urlDatabase)
-  console.log(red)
+  // console.log(urlDatabase)
+  // console.log(red)
   //console.log(red in urlDatabase);
   if (urlDatabase[red]) {
-    console.log(urlDatabase[red])
+    //console.log(urlDatabase[red])
     res.redirect(urlDatabase[red]);
   } else {
     res.send("Invalid URL, you will be redirected when I implement it or when you hit the back arrow.")
@@ -38,11 +38,15 @@ app.get(`/u/:shortURL`, (req, res) => {
 
 //POSTS
 
+app.post("/urls/:shortURL/update", (req, res) => {
+  const update = req.body
+  urlDatabase[req.params['shortURL']] = req.body['newLongURL'];
+res.redirect("/urls")});
+
 app.post("/urls/:shortURL/delete", (req, res) => {
 
   const destroy = req.params.shortURL;
   delete urlDatabase[destroy];
-  console.log(urlDatabase);
   res.redirect("/urls");
 });
 
