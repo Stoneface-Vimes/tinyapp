@@ -1,10 +1,12 @@
 const express = require('express');
 const generateRandomString = require("./randomStringGenerator")
+const cookieParser = require('cookie-parser');
 const app = express();
+app.use(cookieParser())
 const bodyParser = require("body-parser")
 const PORT = 8080; // default port of 8080, redirects to 8000 in vagrant
 
-app.use(bodyParser.urlencoded({extended: true}))
+app.use(bodyParser.urlencoded({ extended: true }))
 app.set("view engine", "ejs");
 
 const urlDatabase = {
@@ -15,11 +17,15 @@ const urlDatabase = {
 //GETS
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  templateVars = {username: req.cookies["username"]}
+  res.render("urls_new", templateVars);
 })
 
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase };
+  let templateVars = {
+    username: req.cookies["username"],
+    urls: urlDatabase
+  };
   res.render("urls_index", templateVars);
 });
 
@@ -38,10 +44,21 @@ app.get(`/u/:shortURL`, (req, res) => {
 
 //POSTS
 
+app.post('/logout', (req, res) => {
+  res.clearCookie('username');
+  res.redirect("/urls")
+});
+
+app.post("/login", (req, res) => {
+  console.log(req.body.username);
+  res.cookie('username', req.body.username)
+  res.redirect('/urls');
+});
+
 app.post("/urls/:shortURL/update", (req, res) => {
-  const update = req.body
   urlDatabase[req.params['shortURL']] = req.body['newLongURL'];
-res.redirect("/urls")});
+  res.redirect("/urls")
+});
 
 app.post("/urls/:shortURL/delete", (req, res) => {
 
@@ -56,7 +73,11 @@ app.post("/urls", (req, res) => {
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect(`urls/${shortURL}`)
   app.get(`/urls/:shortURL`, (req, res) => {
-    let templateVars = {shortURL: shortURL, longURL: urlDatabase[shortURL]}
+    let templateVars = {
+      username: req.cookies["username"],
+      shortURL: shortURL,
+      longURL: urlDatabase[shortURL]
+    }
     res.render("urls_show", templateVars);
   });
 });
@@ -65,7 +86,11 @@ app.post("/urls", (req, res) => {
 //Since anything following the : will be taken as an route parameter, needs to be the last route checked
 //when working with 'urls/'
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
+  let templateVars = {
+    username: req.cookies["username"],
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL]
+  };
   res.render("urls_show", templateVars);
 });
 
