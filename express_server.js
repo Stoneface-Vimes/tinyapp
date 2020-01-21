@@ -12,11 +12,28 @@ const urlDatabase = {
   "9sm5xk": "http://www.google.com"
 };
 
-
+app.get(`/u/:shortURL`, (req, res) => {
+  let red = req.params.shortURL
+  console.log(urlDatabase)
+  console.log(red)
+  //console.log(red in urlDatabase);
+  if (urlDatabase[red]) {
+    console.log(urlDatabase[red])
+    res.redirect(urlDatabase[red]);
+  } else {
+    res.send("Invalid URL, you will be redirected when I implement it or when you hit the back arrow.")
+  }
+});
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); //Log the POST request body to the console
-  res.send("Ok"); //Respond with OK (placeholder response)
+  //console.log(req.body); //Log the POST request body to the console
+  shortURL = generateRandomString();
+  urlDatabase[shortURL] = req.body.longURL;
+  res.redirect(`urls/${shortURL}`)
+  app.get(`/urls/:shortURL`, (req, res) => {
+    let templateVars = {shortURL: shortURL, longURL: urlDatabase[shortURL]}
+    res.render("urls_show", templateVars);
+  });
 });
 
 app.get("/urls/new", (req, res) => {
