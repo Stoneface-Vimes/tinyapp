@@ -1,6 +1,7 @@
 const express = require('express');
 const generateRandomString = require("./randomStringGenerator")
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
 const app = express();
 app.use(cookieParser())
 const bodyParser = require("body-parser")
@@ -41,17 +42,18 @@ const urlDatabase = {
     userID: "user2RandomID"
   }
 };
-
+hashedPassword1 = bcrypt.hashSync('123', 10)
+hashedPassword2 = bcrypt.hashSync('123', 10)
 const users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
-    password: "123"
+    password: hashedPassword1
   },
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "123"
+    password: hashedPassword2
   }
 };
 
@@ -127,16 +129,19 @@ app.post('/register', (req, res) => {
     res.send("Status Code 400\nEmail already in use")
     return;
   }
+  const hashedPassword = bcrypt.hashSync(password, 10)
   const user = {
     id: id,
     email: email,
-    password: password
+    password: hashedPassword
   }
   users[id] = {
     id: id,
     email: email,
-    password: password
+    password: hashedPassword
   }
+
+  console.log(users)
 
   res.cookie('user_id', user)
   res.redirect("/urls");
@@ -152,7 +157,7 @@ app.post("/login", (req, res) => {
   const { email, password } = req.body;
   let potentialID = emailAlreadyExists(email)
   if (potentialID) {
-    if (password === users[potentialID].password) {
+    if ( bcrypt.compareSync(password, users[potentialID].password)) {
       res.cookie('user_id', users[potentialID])
       res.redirect('/urls');
 
@@ -213,9 +218,13 @@ app.post("/urls", (req, res) => {
 //Since anything following the : will be taken as an route parameter, needs to be the last route checked
 //when working with 'urls/'
 app.get("/urls/:shortURL", (req, res) => {
-
   const placeholder = req.params.shortURL;
-  if (!req.cookies['user_id']) {
+
+
+  console.log(urlDatabase[placeholder].userID)
+  console.log(req.cookies['user_id'])
+
+  if (req.cookies['user_id'] === undefined) {
     let templateVars = {
       user: null
     }
@@ -223,7 +232,7 @@ app.get("/urls/:shortURL", (req, res) => {
 
   } else if (urlDatabase[placeholder].userID !== req.cookies['user_id']) {//check if the userID of the requested shorturl matches the current users userid
     let templateVars = {
-      user: 1
+      user: '1'
     }
     res.render("urls_show", templateVars);
   } else {
