@@ -103,6 +103,10 @@ app.get("/urls", (req, res) => {
 //The urlDatabase varible. If it's undefined an message is sent stating the URL is invalid
 app.get(`/u/:shortURL`, (req, res) => {
   let red = req.params.shortURL
+  console.log(req.cookies)
+  if (req.cookies['user_id'] === undefined){
+    res.send("Only owners of tinyURLs are allowed to access said URLs.")
+  }
   if (urlDatabase[red]) {
     res.redirect(urlDatabase[red][longURL]);
   } else {
@@ -173,13 +177,24 @@ app.post("/urls/:shortURL/update", (req, res) => {
 //Handles deleting a shortURL key/value pair from the URL database
 //then redirects the user to the /urls page
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const destroy = req.params.shortURL;
-  delete urlDatabase[destroy];
-  res.redirect("/urls");
+  if (req.cookies['user_id]']) {
+    if (req.cookies['user_id'] == urlDatabase[shortURL].userID) {
+      const placeholder = req.params
+      console.log(placeholder.shortURL)
+      const destroy = req.params.shortURL;
+      delete urlDatabase[destroy];
+      res.redirect("/urls");
+    }
+  } else {
+    res.send("Only owners of tinyURLs are allowed to delete said URLs.")
+  }
+
 });
 //Handles generating a new shortURL key. The key is added to urlDatabase
 //with it's value defined by the client.
 app.post("/urls", (req, res) => {
+
+
   shortURL = generateRandomString();
   urlDatabase[shortURL] = {
     longURL: req.body.newLongURL,
@@ -210,10 +225,10 @@ app.get("/urls/:shortURL", (req, res) => {
     res.render("urls_show", templateVars);
 
   } else if (urlDatabase[placeholder].userID !== req.cookies['user_id']) {//check if the userID of the requested shorturl matches the current users userid
-  let templateVars = {
-    user: 1
-  }
-  res.render("urls_show", templateVars);
+    let templateVars = {
+      user: 1
+    }
+    res.render("urls_show", templateVars);
   } else {
     let templateVars = {
       user: req.cookies['user_id'],
