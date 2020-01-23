@@ -1,9 +1,12 @@
 const express = require('express');
 const generateRandomString = require("./randomStringGenerator")
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const app = express();
-app.use(cookieParser())
+app.use(cookieSession({
+  name: 'session',
+  secret: 'correcthorsebatterystaple'
+}))
 const bodyParser = require("body-parser")
 const PORT = 8080; // default port of 8080, redirects to 8000 in vagrant
 
@@ -11,16 +14,13 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.set("view engine", "ejs");
 
 const urlsForUser = function (id) {
-  console.log("This is the user id ", id)
   const urlIDs = Object.keys(urlDatabase);
   const userURLs = [];
   for (let element of urlIDs) {
     if (urlDatabase[element].userID === id) {
-      console.log(element)
       userURLs.push([element, urlDatabase[element].longURL]);
     }
   }
-  console.log("Theres are all the urls that matched the given id", userURLs)
   return userURLs;
 };
 
@@ -73,22 +73,22 @@ app.get('/register', (req, res) => {
 
 //Renders the page for creating a new tiny url
 app.get("/urls/new", (req, res) => {
-  if (req.cookies['user_id'] === undefined) {
+  if (req.session.user_id === undefined) {
     res.redirect("/login");
   } else {
-    templateVars = { user: req.cookies['user_id'] }
+    templateVars = { user: req.session.user_id }
   }
   res.render("urls_new", templateVars);
 })
 
 app.get("/urls", (req, res) => {
 
-  if (req.cookies['user_id']) {
+  if (req.session.user_id) {
 
-    url = urlsForUser(req.cookies['user_id'].id);
+    url = urlsForUser(req.session.user_id.id);
     console.log(url)
     const templateVars = {
-      user: req.cookies['user_id'],
+      user: req.session.user_id,
       urls: url
     };
     res.render("urls_index", templateVars);
@@ -105,7 +105,6 @@ app.get("/urls", (req, res) => {
 //The urlDatabase varible. If it's undefined an message is sent stating the URL is invalid
 app.get(`/u/:shortURL`, (req, res) => {
   let red = req.params.shortURL
-  console.log(req.cookies)
   if (urlDatabase[red]) {
     res.redirect(urlDatabase[red].longURL);
   } else {
@@ -130,24 +129,18 @@ app.post('/register', (req, res) => {
     return;
   }
   const hashedPassword = bcrypt.hashSync(password, 10)
-  const user = {
-    id: id,
-    email: email,
-    password: hashedPassword
-  }
   users[id] = {
     id: id,
     email: email,
     password: hashedPassword
   }
-
-  console.log(users)
-
-  res.cookie('user_id', user)
+  req.session.user_id = users[id];
+  res.cookie('user_id', req.session.user_id)
   res.redirect("/urls");
 });
 // Logs the user out by clearing their cookie data from their res object
 app.post('/logout', (req, res) => {
+  req.session = null;
   res.clearCookie('user_id');
   res.redirect("/urls")
 });
@@ -157,8 +150,9 @@ app.post("/login", (req, res) => {
   const { email, password } = req.body;
   let potentialID = emailAlreadyExists(email)
   if (potentialID) {
-    if ( bcrypt.compareSync(password, users[potentialID].password)) {
-      res.cookie('user_id', users[potentialID])
+    if (bcrypt.compareSync(password, users[potentialID].password)) {
+      req.session.user_id = users[potentialID];
+      res.cookie('user_id', req.session.user_id)
       res.redirect('/urls');
 
     } else {
@@ -179,8 +173,10 @@ app.post("/urls/:shortURL/update", (req, res) => {
 //Handles deleting a shortURL key/value pair from the URL database
 //then redirects the user to the /urls page
 app.post("/urls/:shortURL/delete", (req, res) => {
-  if (req.cookies['user_id]']) {
-    if (req.cookies['user_id'] == urlDatabase[shortURL].userID) {
+  const placeholder = req.params.shortURL;
+  console.log(placeholder)
+  if (req.session.user_id) {
+    if (req.session.user_id.id == urlDatabase[placeholder].userID) {
       const placeholder = req.params
       console.log(placeholder.shortURL)
       const destroy = req.params.shortURL;
@@ -200,17 +196,25 @@ app.post("/urls", (req, res) => {
   shortURL = generateRandomString();
   urlDatabase[shortURL] = {
     longURL: req.body.newLongURL,
-    userID: req.cookies.user_id.id
+    userID: req.session.user_id.id
   } //
   res.redirect(`urls/${shortURL}`)
   app.get(`/urls/:shortURL`, (req, res) => {
     let placeholder = req.params.shortURL;
-    let templateVars = {
-      user: users[req.cookies['user_id']],
-      shortURL: shortURL,
-      longURL: urlDatabase[shortURL[longURL]]
+
+    if (req.session.user_id === undefined) {
+      res.render("urls_show", { user: undefined })
+    } else if (urlDatabase[placeholder].userID !== req.session.user_id) {
+      res.render("urls_show", { user: 'thief' });
+    } else {
+      let templateVars = {
+        user: req.session.user_id.id,
+        shortURL: shortURL,
+        longURL: urlDatabase[shortURL[longURL]]
+      }
+      res.render("urls_show", templateVars);
+
     }
-    res.render("urls_show", templateVars);
   });
 });
 
@@ -220,29 +224,33 @@ app.post("/urls", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const placeholder = req.params.shortURL;
 
+  console.log(placeholder)
+  console.log(urlDatabase)
+  console.log(req.session.user_id)
 
-  console.log(urlDatabase[placeholder].userID)
-  console.log(req.cookies['user_id'])
-
-  if (req.cookies['user_id'] === undefined) {
+  if (req.session.user_id === undefined) {
     let templateVars = {
       user: null
     }
+    console.log("session ID = null")
     res.render("urls_show", templateVars);
 
-  } else if (urlDatabase[placeholder].userID !== req.cookies['user_id']) {//check if the userID of the requested shorturl matches the current users userid
+  } else if (urlDatabase[placeholder] === undefined) {
+    res.send("The requested tinyURL does not exist")
+  } else if (urlDatabase[placeholder].userID !== req.session.user_id.id) {//check if the userID of the requested shorturl matches the current users userid
     let templateVars = {
-      user: '1'
+      user: 'thief'
     }
+    console.log("session ID = 'thief'")
     res.render("urls_show", templateVars);
-  } else {
+  } else if (urlDatabase[placeholder].userID === req.session.user_id.id) {
     let templateVars = {
-      user: req.cookies['user_id'],
+      user: req.session.user_id.id,
       shortURL: placeholder,
       longURL: urlDatabase[placeholder].longURL
     }
+    console.log("session ID = stored ID")
     res.render("urls_show", templateVars);
-
   }
 });
 
