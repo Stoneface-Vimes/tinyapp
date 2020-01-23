@@ -44,10 +44,10 @@
         </tr>
       </thead>
       <tbody>
-        <% for(let url in urls) { %>
+        <% for(let url of urls) { %>
         <tr>
-          <td><%= url %></td>
-          <td><%= urls[url].longURL%></td>
+          <td><%= url[0] %></td>
+          <td><%= url[1] %></td>
           <td>
             <form method="GET" action="/urls/<%= url %>/"><button type="submit" class="btn btn-primary">Edit</button>
             </form>
