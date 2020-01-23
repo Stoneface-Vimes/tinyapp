@@ -104,11 +104,8 @@ app.get("/urls", (req, res) => {
 app.get(`/u/:shortURL`, (req, res) => {
   let red = req.params.shortURL
   console.log(req.cookies)
-  if (req.cookies['user_id'] === undefined){
-    res.send("Only owners of tinyURLs are allowed to access said URLs.")
-  }
   if (urlDatabase[red]) {
-    res.redirect(urlDatabase[red][longURL]);
+    res.redirect(urlDatabase[red].longURL);
   } else {
     res.send("Invalid URL, you will be redirected when I implement it or when you hit the back arrow.")
   }
