@@ -8,6 +8,49 @@
   <title>URL - TinyApp Example</title>
 </head>
 
+<% if (!user) { %>
+
+<body>
+  <%- include("./partials/_header"); -%>
+  <main style="margin: 1em;">
+    <h3>Hello Stranger!</h3>
+    <i>You're not currently logged in... 3:</i><br>
+    <i>Please click register if you do not have an account</i><br>
+    <i>Or hit login to enter your credentials and see your URLS</i>
+  </main>
+  <!-- Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+    integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+    crossorigin="anonymous"></script>
+</body>
+<% } else if (user === 1) { %>
+
+<body>
+  <%- include("./partials/_header"); -%>
+  <main style="margin: 1em;">
+    <h3>This isn't yours!</h3>
+    <i>You account is not able to view tinyURLS you did not make</i>
+  </main>
+  <!-- Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+    integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+    crossorigin="anonymous"></script>
+</body>
+
+<% } else { %>
+
 <body>
   <%- include("./partials/_header"); -%>
   <div class="card text-center">
@@ -15,7 +58,8 @@
     <div class="card-body">
       <h5 class="card-title">TinyURL for: <%= longURL %></h5>
       <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
-      <form method="POST" action="/urls/<%= shortURL %>/update/">Update Long URL? <input type="text" name="newLongURL"><input type = "submit" value="Submit">
+      <form method="POST" action="/urls/<%= shortURL %>/update/">Update Long URL? <input type="text"
+          name="newLongURL"><input type="submit" value="Submit">
       </form>
     </div>
     <div class="card-footer text-muted"></div>
@@ -31,5 +75,7 @@
     integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
     crossorigin="anonymous"></script>
 </body>
+
+<% } %>
 
 </html>

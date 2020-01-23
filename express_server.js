@@ -9,7 +9,7 @@ const PORT = 8080; // default port of 8080, redirects to 8000 in vagrant
 app.use(bodyParser.urlencoded({ extended: true }))
 app.set("view engine", "ejs");
 
-const urlsForUser = function(id) {
+const urlsForUser = function (id) {
   console.log("This is the user id ", id)
   const urlIDs = Object.keys(urlDatabase);
   const userURLs = [];
@@ -24,7 +24,7 @@ const urlsForUser = function(id) {
 };
 
 
-const emailAlreadyExists = function(check) {
+const emailAlreadyExists = function (check) {
   for (element in users) {
     if (users[element].email === check) {
       return element;
@@ -203,12 +203,26 @@ app.post("/urls", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
 
   const placeholder = req.params.shortURL;
+  if (!req.cookies['user_id']) {
+    let templateVars = {
+      user: null
+    }
+    res.render("urls_show", templateVars);
+
+  } else if (urlDatabase[placeholder].userID !== req.cookies['user_id']) {//check if the userID of the requested shorturl matches the current users userid
   let templateVars = {
-    user: req.cookies['user_id'],
-    shortURL: placeholder,
-    longURL: urlDatabase[placeholder].longURL
-  };
+    user: 1
+  }
   res.render("urls_show", templateVars);
+  } else {
+    let templateVars = {
+      user: req.cookies['user_id'],
+      shortURL: placeholder,
+      longURL: urlDatabase[placeholder].longURL
+    }
+    res.render("urls_show", templateVars);
+
+  }
 });
 
 app.get("/", (req, res) => {
