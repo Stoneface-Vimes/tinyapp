@@ -9,6 +9,7 @@ app.use(cookieSession({
 }))
 const bodyParser = require("body-parser")
 const PORT = 8080; // default port of 8080, redirects to 8000 in vagrant
+const getUserByEmail = require("./getUserByEmail")
 
 app.use(bodyParser.urlencoded({ extended: true }))
 app.set("view engine", "ejs");
@@ -24,14 +25,6 @@ const urlsForUser = function (id) {
   return userURLs;
 };
 
-
-const emailAlreadyExists = function (check) {
-  for (element in users) {
-    if (users[element].email === check) {
-      return element;
-    }
-  }
-}
 const urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
@@ -124,7 +117,7 @@ app.post('/register', (req, res) => {
     res.send("Status Code 400\nInvalid email or password")
     return;
   }
-  if (emailAlreadyExists(email)) {
+  if (getUserByEmail(email, users)) {
     res.send("Status Code 400\nEmail already in use")
     return;
   }
@@ -148,7 +141,7 @@ app.post('/logout', (req, res) => {
 app.post("/login", (req, res) => {
   //Returns the ID of a given email if it exists and undefined if it does not
   const { email, password } = req.body;
-  let potentialID = emailAlreadyExists(email)
+  let potentialID = getUserByEmail(email, users)
   if (potentialID) {
     if (bcrypt.compareSync(password, users[potentialID].password)) {
       req.session.user_id = users[potentialID];
