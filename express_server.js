@@ -9,17 +9,34 @@ const PORT = 8080; // default port of 8080, redirects to 8000 in vagrant
 app.use(bodyParser.urlencoded({ extended: true }))
 app.set("view engine", "ejs");
 
-const emailAlreadyExists = function (check) {
+const urlsForUser = function(id) {
+  const urlIDs = Object.keys(urlDatabase);
+  const userURLs = [];
+  for (let element of urlIDs) {
+    if (urlDatabase[element].userID === id) {
+      userURLs.push(urlDatabase[element].longURL);
+    }
+  }
+  return userURLs;
+};
+
+
+const emailAlreadyExists = function(check) {
   for (element in users) {
-    console.log(element)
     if (users[element].email === check) {
       return element;
     }
   }
 }
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xk": "http://www.google.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "userRandomID"
+  },
+  "9sm5xk": {
+    longURL: "http://www.google.com",
+    userID: "user2RandomID"
+  }
 };
 
 const users = {
@@ -31,7 +48,7 @@ const users = {
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk"
+    password: "123"
   }
 };
 
@@ -40,7 +57,7 @@ const users = {
 ------------GETS----------------
 */
 
-app.get('/login', (req, res) =>{
+app.get('/login', (req, res) => {
   res.render("login")
 
 });
@@ -51,26 +68,42 @@ app.get('/register', (req, res) => {
 
 //Renders the page for creating a new tiny url
 app.get("/urls/new", (req, res) => {
-  console.log (req.cookies['user_id'])
-  templateVars = {user: req.cookies['user_id']}
-  console.log("The template vars are: ", templateVars)
+  //console.log(req.cookies['user_id'])
+  if (req.cookies['user_id'] === undefined) {
+    res.redirect("/login");
+  } else {
+    templateVars = { user: req.cookies['user_id'] }
+  }
+  //console.log("The template vars are: ", templateVars)
   res.render("urls_new", templateVars);
 })
 
-//Adds a new tiny url key/value pair the the database then renders the index
 app.get("/urls", (req, res) => {
-  let templateVars = {
-    user: req.cookies['user_id'],
-    urls: urlDatabase
-  };
-  res.render("urls_index", templateVars);
+
+  if (req.cookies['user_id']) {
+
+    urls = urlsForUser(req.cookies['user_id'].id);
+    //console.log("Here are the urls in array format", urls)
+    const templateVars = {
+      user: req.cookies['user_id'],
+      urls: urlDatabase
+    };
+    res.render("urls_index", templateVars);
+  } else {
+    const templateVars = {
+      user: null,
+      urls: undefined
+    }
+    res.render("urls_index", templateVars);
+
+  }
 });
 //Parses anything after the /u/ as a shortURL and redirects to the value that url has stored in
 //The urlDatabase varible. If it's undefined an message is sent stating the URL is invalid
 app.get(`/u/:shortURL`, (req, res) => {
   let red = req.params.shortURL
   if (urlDatabase[red]) {
-    res.redirect(urlDatabase[red]);
+    res.redirect(urlDatabase[red][longURL]);
   } else {
     res.send("Invalid URL, you will be redirected when I implement it or when you hit the back arrow.")
   }
@@ -118,10 +151,10 @@ app.post("/login", (req, res) => {
   //Returns the ID of a given email if it exists and undefined if it does not
   const { email, password } = req.body;
   let potentialID = emailAlreadyExists(email)
-  console.log("PotentialID = ", users[potentialID])
+  //console.log("PotentialID = ", users[potentialID])
   if (potentialID) {
-    console.log(`potentialID password = ${users[potentialID].password}`)
-    console.log(`given password = ${password}`)
+    // console.log(`potentialID password = ${users[potentialID].password}`)
+    // console.log(`given password = ${password}`)
     if (password === users[potentialID].password) {
       res.cookie('user_id', users[potentialID])
       res.redirect('/urls');
@@ -137,7 +170,10 @@ app.post("/login", (req, res) => {
 //Handles updating a long url value to a new user defined value,
 //then returns the user back to the /urls page
 app.post("/urls/:shortURL/update", (req, res) => {
-  urlDatabase[req.params['shortURL']] = req.body['newLongURL'];
+  // console.log(urlDatabase)
+  let placeholder = req.params['shortURL'];
+  urlDatabase[placeholder].longURL = req.body['newLongURL']; //append userID to left side of argument
+  // console.log(urlDatabase)
   res.redirect("/urls")
 });
 //Handles deleting a shortURL key/value pair from the URL database
@@ -151,13 +187,20 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 //with it's value defined by the client.
 app.post("/urls", (req, res) => {
   shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
+  console.log("This is the request body", req.body)
+  console.log("This is the request cookies", req.cookies)
+  urlDatabase[shortURL] = {
+    longURL: req.body.newLongURL,
+    userID: req.cookies.user_id.id
+  } //
+  console.log("This is the updated database", urlDatabase)
   res.redirect(`urls/${shortURL}`)
   app.get(`/urls/:shortURL`, (req, res) => {
+    let placeholder = req.params.shortURL;
     let templateVars = {
       user: users[req.cookies['user_id']],
       shortURL: shortURL,
-      longURL: urlDatabase[shortURL]
+      longURL: urlDatabase[shortURL[longURL]]
     }
     res.render("urls_show", templateVars);
   });
@@ -167,10 +210,14 @@ app.post("/urls", (req, res) => {
 //Since anything following the : will be taken as an route parameter, needs to be the last route checked
 //when working with 'urls/'
 app.get("/urls/:shortURL", (req, res) => {
+
+  const placeholder = req.params.shortURL;
+  console.log(placeholder)
+
   let templateVars = {
     user: req.cookies['user_id'],
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL]
+    shortURL: placeholder,
+    longURL: urlDatabase[placeholder].longURL
   };
   res.render("urls_show", templateVars);
 });
