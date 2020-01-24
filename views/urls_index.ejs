@@ -10,8 +10,9 @@
     integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
   <title>TinyApp</title>
 </head>
-<% if (!user) { %>
+<% if (!user) { %> 
   <body>
+      <!-- If the user is not logged in, displays this catch-all "Please Login" page -->
     <%- include("./partials/_header"); -%>
     <main style="margin: 1em;">
       <h3>Hello Stranger!</h3>

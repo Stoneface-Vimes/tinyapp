@@ -8,7 +8,7 @@
   <title>URL - TinyApp Example</title>
 </head>
 
-<% if (!user) { %>
+<% if (!user) { %>   <!-- Display when the client is not logged in -->
 
 <body>
   <%- include("./partials/_header"); -%>
@@ -29,7 +29,7 @@
     integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
     crossorigin="anonymous"></script>
 </body>
-<% } else if (user === 'thief') { %>
+<% } else if (user === 'thief') { %> <!-- Display when the client is logged in and the tinyurl they are viewing is not theirs -->
 
 <body>
   <%- include("./partials/_header"); -%>
@@ -49,17 +49,17 @@
     crossorigin="anonymous"></script>
 </body>
 
-<% } else { %>
+<% } else { %> <!-- Display when the client is logged in and viewing tinyurls they own -->
 
 <body>
   <%- include("./partials/_header"); -%>
   <div class="card text-center">
     <div class="card-header"></div>
     <div class="card-body">
-      <h5 class="card-title">TinyURL for: <%= longURL %></h5>
-      <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
-      <form method="POST" action="/urls/<%= shortURL %>/update/">Update Long URL? <input type="text"
-          name="newLongURL"><input type="submit" value="Submit">
+      <h5 class="card-title">User ID : <%= user %></h5>
+      <p class="card-text">Tiny URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
+      <form method="POST" action="/urls/<%= shortURL %>">Update Long URL? <input type="text"
+          name="newLongURL" value=<%= longURL %>><input type="submit" value="Submit">
       </form>
     </div>
     <div class="card-footer text-muted"></div>
