@@ -211,7 +211,7 @@ app.get("/urls/:shortURL", (req, res) => {
     //If the client user id matches the userID attached to the tinyURL, passes tempplatevars that make urls_show display the "default" view
   } else if (urlDatabase[placeholder].userID === req.session.user_id.id) {
     let templateVars = {
-      user: req.session.user_id.id,
+      user: req.session.user_id,
       shortURL: placeholder,
       longURL: urlDatabase[placeholder].longURL
     }
