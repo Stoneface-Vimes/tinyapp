@@ -9,6 +9,7 @@
       <div class="navbar-nav">
         <nav><a class="nav-item nav-link" href="/urls">My URLs</a></nav>
         <nav><a class="nav-item nav-link" href="/urls/new">Create New URL</a></nav>
+        <!-- The below logic controls whether the logged in view or the non-logged in view is displayed based on the passed in template vars -->
         <% if (user) { %>
         <%= user.email %></i></b>
         <form method="POST" action="/logout"><button type="submit" class="btn btn-primary">Logout</button></form>

@@ -13,8 +13,8 @@ const getUserByEmail = require("./getUserByEmail")
 
 app.use(bodyParser.urlencoded({ extended: true }))
 app.set("view engine", "ejs");
-
-const urlsForUser = function (id) { //Takes a given user id and returns an array with every url that has that userID as a value
+//Takes a given user id and returns an array with every url that has that userID as a value
+const urlsForUser = function (id) { 
   const urlIDs = Object.keys(urlDatabase);
   const userURLs = [];
   for (let element of urlIDs) {
@@ -54,14 +54,21 @@ const users = {
 /*
 ------------GETS----------------
 */
-
+//If the user is logged in, redirects them to their urls page
 app.get('/login', (req, res) => {
-  res.render("login")
-
+  if (req.session.user_id) {
+    res.redirect('/urls');
+  } else {
+    res.render("login")
+  }
 });
-
+//If the user is logged in, redirects them to their urls page
 app.get('/register', (req, res) => {
-  res.render("register")
+  if (req.session.user_id) {
+    res.redirect('/urls');
+  } else {
+    res.render("register")
+  }
 });
 
 //If user is logged in, renders the page for creating a new tiny url
@@ -80,7 +87,6 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls", (req, res) => {
   if (req.session.user_id) {
     url = urlsForUser(req.session.user_id.id);
-    console.log(url)
     const templateVars = {
       user: req.session.user_id,
       urls: url
@@ -109,31 +115,30 @@ app.get(`/u/:shortURL`, (req, res) => {
 ------------------POSTS-----------------
 */
 
-//Generates a random string to use as the user ID. Checks if the email or password are empty strings and returns the relevant message
-//Checks if the given email exists already and if so returns the relevant method
-//If the username and password pass those checks, a new user is added to the users database (password is hashed).
-//After adding the new user, sets the cookie data to the users id and redirects the client to /urls
+//Handles the register backend
 app.post('/register', (req, res) => {
+  //Generates a random string to use as the user ID. 
   const id = generateRandomString();
   const { email, password } = req.body;
+  // Checks if the email or password are empty strings and returns the relevant message
   if (email === "" || password === "") {
     res.send("Status Code 400\nInvalid email or password")
     return;
-  }
+  } //Checks if the given email exists already and if so returns the relevant method
   if (getUserByEmail(email, users)) {
     res.send("Status Code 400\nEmail already in use")
     return;
-  }
+  } //If the username and password pass those checks, a new user is added to the users database (password is hashed).
   const hashedPassword = bcrypt.hashSync(password, 10)
   users[id] = {
     id: id,
     email: email,
     password: hashedPassword
-  }
+  } //After adding the new user, sets the cookie data to the users id and redirects the client to /urls
   req.session.user_id = users[id];
   res.redirect("/urls");
 });
-// Logs the user out by clearing their cookie data from their res object
+// Logs the user out by clearing their cookie data from their req.session object
 app.post('/logout', (req, res) => {
   req.session = null;
   res.redirect("/urls")
@@ -147,18 +152,17 @@ app.post("/login", (req, res) => {
     //checks the client password input against the stored password, on a true value sets the users cookie data and redirects
     if (bcrypt.compareSync(password, users[potentialID].password)) {
       req.session.user_id = users[potentialID];
-      //res.cookie('user_id', req.session.user_id)
       res.redirect('/urls');
-
     } else { //Normally this error code would be more ambigious as this can give the client information they may not know already
+      //but for evaluation purposes it will look like this
       res.send('Error Code 403 Password does not match')
     }
 
-  } else { ///Normally this error code would be more ambigious as this can give the client information they may not know already
+  } else { ///Same as above
     res.send('Error Code 403 Email is not registered')
   }
 });
-//Handles updating a long url value to a new user defined value,
+//Handles updating the a long url value to a new user defined value in the urlDatabase,
 //then returns the user back to the /urls page
 app.post("/urls/:shortURL", (req, res) => {
   let placeholder = req.params['shortURL'];
@@ -169,9 +173,9 @@ app.post("/urls/:shortURL", (req, res) => {
 //then redirects the user to the /urls page
 app.post("/urls/:shortURL/delete", (req, res) => {
   const placeholder = req.params.shortURL;
-  //Checks if the client is logged in, if they are not this will be false
+  //Checks if the client is logged in, if they are not req.session.user_id will be undefined (false)
   if (req.session.user_id) {
-    //checks if the client user id matches the stored user id, if not sends the appropriate message
+    //checks if the client user id matches the stored user id. If not, sends the appropriate message
     if (req.session.user_id.id === urlDatabase[placeholder].userID) {
       const destroy = req.params.shortURL;
       delete urlDatabase[destroy];
@@ -184,7 +188,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   }
 
 });
-//Handles generating a new shortURL key. The key is added to urlDatabase
+//Handles generating a new shortURL key. The key is generated and added to the urlDatabase object
 //with it's value defined by the client.
 app.post("/urls", (req, res) => {
   shortURL = generateRandomString();
@@ -202,26 +206,29 @@ app.get("/urls/:shortURL", (req, res) => {
   const placeholder = req.params.shortURL;
   //Renders urls_show to display the "logged out" view
   if (req.session.user_id === undefined) {
-    res.render("urls_show", {user: null});
+    res.render("urls_show", { user: null });
   } else if (urlDatabase[placeholder] === undefined) {
-    res.send("The requested tinyURL does not exist")
+    res.send("The requested tinyURL does not exist, you will be redirected when you hit the back button.")
     //IF the client user id does not match the userID attached to the tinyURL, passes vars that make urls_show display the 'theif' view
   } else if (urlDatabase[placeholder].userID !== req.session.user_id.id) {
-    res.render("urls_show", {user: 'thief'});
-    //If the client user id matches the userID attached to the tinyURL, passes tempplatevars that make urls_show display the "default" view
+    res.render("urls_show", { user: 'thief' });
+    //If the client user id matches the userID attached to the tinyURL, passes tempplatevars that make urls_show display the "default"/"logged in" view
   } else if (urlDatabase[placeholder].userID === req.session.user_id.id) {
     let templateVars = {
       user: req.session.user_id,
       shortURL: placeholder,
       longURL: urlDatabase[placeholder].longURL
     }
-    console.log("session ID = stored ID")
     res.render("urls_show", templateVars);
   }
 });
-
+//Redirects the user based on whether or not they are logged in
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  if (req.session.user_id) {
+    res.redirect("/urls")
+  } else {
+    res.redirect("/login")
+  }
 });
 
 app.listen(PORT, () => {
