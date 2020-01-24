@@ -66,7 +66,7 @@ app.get('/register', (req, res) => {
 
 //Renders the page for creating a new tiny url
 app.get("/urls/new", (req, res) => {
-  if (req.session.user_id === undefined) {
+  if (!req.session.user_id) {
     res.redirect("/login");
   } else {
     templateVars = { user: req.session.user_id }

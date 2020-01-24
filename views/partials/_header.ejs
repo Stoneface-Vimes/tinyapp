@@ -10,7 +10,7 @@
         <nav><a class="nav-item nav-link" href="/urls">My URLs</a></nav>
         <nav><a class="nav-item nav-link" href="/urls/new">Create New URL</a></nav>
         <% if (user) { %>
-        <%= user.id %></i></b>
+        <%= user.email %></i></b>
         <form method="POST" action="/logout"><button type="submit" class="btn btn-primary">Logout</button></form>
         <% } else { %>
         <nav>
