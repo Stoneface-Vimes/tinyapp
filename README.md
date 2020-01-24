@@ -4,8 +4,8 @@ TinyApp is a web application built with Node and Express that allows users to sh
 
 ## Final Product
 
-!["screenshot description"](#)
-!["screenshot description"](#)
+!["This is what the main page of TinyAPP looks like when logged in"](https://raw.githubusercontent.com/Stoneface-Vimes/tinyapp/master/docs/logged-in-urls.png)
+!["This is what the main page of TinyApp looks like when logged out"](https://raw.githubusercontent.com/Stoneface-Vimes/tinyapp/master/docs/logged-out-urls.png)
 
 ## Dependencies
 
